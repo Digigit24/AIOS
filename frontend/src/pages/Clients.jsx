@@ -53,6 +53,172 @@ import {
   LayoutTemplate,
   Maximize2
 } from 'lucide-react';
+
+const DEFAULT_PAYLOADS = {
+  gmb: JSON.stringify({ event: "{{event}}", clientId: "{{clientId}}", clientName: "{{clientName}}", postId: "{{postId}}", title: "{{title}}", summary: "{{summary}}", mediaurl: "{{mediaurl}}", media_items: "{{media_items}}" }, null, 2),
+  ig: JSON.stringify({ event: "{{event}}", clientId: "{{clientId}}", clientName: "{{clientName}}", postId: "{{postId}}", caption: "{{caption}}", mediaurl: "{{mediaurl}}", media_items: "{{media_items}}" }, null, 2),
+  linkedin: JSON.stringify({ event: "{{event}}", clientId: "{{clientId}}", clientName: "{{clientName}}", postId: "{{postId}}", title: "{{title}}", summary: "{{summary}}", mediaurl: "{{mediaurl}}", media_items: "{{media_items}}" }, null, 2),
+  twitter: JSON.stringify({ event: "{{event}}", clientId: "{{clientId}}", clientName: "{{clientName}}", postId: "{{postId}}", tweet_text: "{{tweet_text}}", mediaurl: "{{mediaurl}}", media_items: "{{media_items}}" }, null, 2),
+  youtube: JSON.stringify({ event: "{{event}}", clientId: "{{clientId}}", clientName: "{{clientName}}", postId: "{{postId}}", video_title: "{{video_title}}", description: "{{description}}", mediaurl: "{{mediaurl}}", media_items: "{{media_items}}" }, null, 2),
+};
+
+const PLATFORM_VARS = {
+  gmb:      ['event', 'clientId', 'clientName', 'postId', 'title', 'summary', 'mediaurl', 'media_items'],
+  ig:       ['event', 'clientId', 'clientName', 'postId', 'caption', 'mediaurl', 'media_items'],
+  linkedin: ['event', 'clientId', 'clientName', 'postId', 'title', 'summary', 'mediaurl', 'media_items'],
+  twitter:  ['event', 'clientId', 'clientName', 'postId', 'tweet_text', 'mediaurl', 'media_items'],
+  youtube:  ['event', 'clientId', 'clientName', 'postId', 'video_title', 'description', 'mediaurl', 'media_items'],
+};
+
+function WebhookPayloadEditor({ platform, savedTemplate, onSave }) {
+  const hasCustom = !!savedTemplate;
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [mode, setMode] = React.useState(hasCustom ? 'custom' : 'default');
+  const [draft, setDraft] = React.useState(savedTemplate || DEFAULT_PAYLOADS[platform] || '{}');
+  const [saving, setSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    setMode(savedTemplate ? 'custom' : 'default');
+    setDraft(savedTemplate || DEFAULT_PAYLOADS[platform] || '{}');
+  }, [savedTemplate, platform]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    await onSave(platform, draft);
+    setSaving(false);
+  };
+
+  const handleReset = async () => {
+    setDraft(DEFAULT_PAYLOADS[platform]);
+    setMode('default');
+    await onSave(platform, null);
+  };
+
+  return (
+    <div style={{ marginTop: 12 }}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(v => !v)}
+        style={{
+          width: '100%', textAlign: 'left',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
+          background: hasCustom ? 'rgba(124,111,247,0.07)' : 'var(--surface)',
+          border: hasCustom ? '1px solid rgba(124,111,247,0.3)' : '1px solid var(--border)',
+        }}
+      >
+        <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: hasCustom ? 'var(--accent)' : 'var(--secondary)' }}>
+          Payload Configuration{hasCustom ? ' · Custom' : ' · Default'}
+        </span>
+        <ChevronRight size={13} style={{ color: 'var(--muted)', transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }} />
+      </button>
+
+      {isOpen && (
+        <div style={{ marginTop: 6, padding: '12px 14px', background: 'var(--surface)', borderRadius: 10, border: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', gap: 3, marginBottom: 10, background: 'var(--card)', borderRadius: 8, padding: 3, border: '1px solid var(--border)' }}>
+            {['default', 'custom'].map(m => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => {
+                  setMode(m);
+                  if (m === 'custom' && !draft) setDraft(DEFAULT_PAYLOADS[platform]);
+                }}
+                style={{
+                  flex: 1, padding: '4px 0', borderRadius: 6, fontSize: 10, fontWeight: 700,
+                  textTransform: 'uppercase', letterSpacing: '0.08em', cursor: 'pointer',
+                  background: mode === m ? 'var(--accent)' : 'transparent',
+                  color: mode === m ? '#fff' : 'var(--secondary)', border: 'none',
+                }}
+              >
+                {m === 'default' ? 'Default' : 'Custom Template'}
+              </button>
+            ))}
+          </div>
+
+          {mode === 'default' ? (
+            <pre style={{
+              fontSize: 10, lineHeight: 1.6, color: 'var(--secondary)', fontFamily: 'monospace',
+              overflow: 'auto', maxHeight: 200, margin: 0, padding: '8px 10px',
+              background: 'var(--card)', borderRadius: 8, border: '1px solid var(--border)', whiteSpace: 'pre-wrap',
+            }}>
+              {DEFAULT_PAYLOADS[platform]}
+            </pre>
+          ) : (
+            <>
+              <textarea
+                value={draft}
+                onChange={e => setDraft(e.target.value)}
+                style={{
+                  width: '100%', height: 160, fontFamily: 'monospace', fontSize: 10, lineHeight: 1.6,
+                  background: 'var(--card)', color: 'var(--text)', border: '1px solid var(--border)',
+                  borderRadius: 8, padding: '8px 10px', resize: 'vertical', outline: 'none', boxSizing: 'border-box',
+                }}
+                placeholder='{ "event": "{{event}}", "data": "{{mediaurl}}" }'
+                spellCheck={false}
+              />
+              <details style={{ marginTop: 6 }}>
+                <summary style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', cursor: 'pointer', userSelect: 'none' }}>
+                  Available variables →
+                </summary>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
+                  {(PLATFORM_VARS[platform] || []).map(v => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setDraft(d => d + `"{{${v}}}"` )}
+                      title={`Insert {{${v}}}`}
+                      style={{
+                        padding: '2px 7px', borderRadius: 4, fontSize: 9, fontWeight: 700,
+                        background: 'var(--surface-strong)', color: 'var(--accent)',
+                        border: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'monospace',
+                      }}
+                    >
+                      {'{{' + v + '}}'}
+                    </button>
+                  ))}
+                </div>
+                <p style={{ fontSize: 9, color: 'var(--muted)', marginTop: 6 }}>
+                  {'Note: wrap array/object vars in quotes in your JSON — e.g. "{{media_items}}" becomes the actual array.'}
+                </p>
+              </details>
+            </>
+          )}
+
+          <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+            {mode === 'custom' && (
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                style={{
+                  flex: 1, padding: '6px 0', borderRadius: 8, fontSize: 10, fontWeight: 700,
+                  background: 'var(--accent)', color: '#fff', border: 'none', cursor: saving ? 'not-allowed' : 'pointer',
+                  opacity: saving ? 0.6 : 1,
+                }}
+              >
+                {saving ? 'Saving…' : 'Save Template'}
+              </button>
+            )}
+            {hasCustom && (
+              <button
+                type="button"
+                onClick={handleReset}
+                style={{
+                  flex: mode === 'default' ? 1 : 0,
+                  padding: '6px 12px', borderRadius: 8, fontSize: 10, fontWeight: 700,
+                  background: 'transparent', color: 'var(--muted)', border: '1px solid var(--border)', cursor: 'pointer',
+                }}
+              >
+                Reset to Default
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 import { cn } from '../lib/utils';
 import { useScrollLock } from '../hooks/useScrollLock';
 import { authFetch, BACKEND_URL } from '../lib/api';
@@ -136,22 +302,27 @@ export default function Clients() {
   const [gmbWebhookUrl, setGmbWebhookUrl] = useState('');
   const [gmbWebhookHeaders, setGmbWebhookHeaders] = useState('');
   const [gmbWebhookActive, setGmbWebhookActive] = useState(false);
+  const [gmbPayloadTemplate, setGmbPayloadTemplate] = useState('');
 
   const [igWebhookUrl, setIgWebhookUrl] = useState('');
   const [igWebhookHeaders, setIgWebhookHeaders] = useState('');
   const [igWebhookActive, setIgWebhookActive] = useState(false);
+  const [igPayloadTemplate, setIgPayloadTemplate] = useState('');
 
   const [linkedinWebhookUrl, setLinkedinWebhookUrl] = useState('');
   const [linkedinWebhookHeaders, setLinkedinWebhookHeaders] = useState('');
   const [linkedinWebhookActive, setLinkedinWebhookActive] = useState(false);
+  const [linkedinPayloadTemplate, setLinkedinPayloadTemplate] = useState('');
 
   const [twitterWebhookUrl, setTwitterWebhookUrl] = useState('');
   const [twitterWebhookHeaders, setTwitterWebhookHeaders] = useState('');
   const [twitterWebhookActive, setTwitterWebhookActive] = useState(false);
+  const [twitterPayloadTemplate, setTwitterPayloadTemplate] = useState('');
 
   const [youtubeWebhookUrl, setYoutubeWebhookUrl] = useState('');
   const [youtubeWebhookHeaders, setYoutubeWebhookHeaders] = useState('');
   const [youtubeWebhookActive, setYoutubeWebhookActive] = useState(false);
+  const [youtubePayloadTemplate, setYoutubePayloadTemplate] = useState('');
 
   // New Post Insertion Form States
   const [newGmbTitle, setNewGmbTitle] = useState('');
@@ -382,6 +553,11 @@ export default function Clients() {
         youtube_webhook_url: ws.youtube_webhook_url,
         youtube_webhook_headers: ws.youtube_webhook_headers,
         youtube_webhook_active: ws.youtube_webhook_active,
+        gmb_payload_template: ws.gmb_payload_template || '',
+        ig_payload_template: ws.ig_payload_template || '',
+        linkedin_payload_template: ws.linkedin_payload_template || '',
+        twitter_payload_template: ws.twitter_payload_template || '',
+        youtube_payload_template: ws.youtube_payload_template || '',
         client_notes: ws.client_notes,
         client_active: ws.client_active !== false
       }));
@@ -443,6 +619,13 @@ export default function Clients() {
         setYoutubeWebhookUrl(match.youtube_webhook_url || '');
         setYoutubeWebhookHeaders(match.youtube_webhook_headers || '');
         setYoutubeWebhookActive(!!match.youtube_webhook_active);
+
+        setGmbPayloadTemplate(match.gmb_payload_template || '');
+        setIgPayloadTemplate(match.ig_payload_template || '');
+        setLinkedinPayloadTemplate(match.linkedin_payload_template || '');
+        setTwitterPayloadTemplate(match.twitter_payload_template || '');
+        setYoutubePayloadTemplate(match.youtube_payload_template || '');
+
         setEditClientNotes(match.client_notes || '');
         setEditClientActive(match.client_active !== false);
 
@@ -640,62 +823,67 @@ export default function Clients() {
     }
   };
 
-  // 5b. Test Webhook Connection Ping
+  // 5b. Test Webhook Connection Ping (server-proxied so headers + JSON are sent correctly)
   const handleTestConnection = async (platform) => {
-    let url = '';
-    let headersStr = '';
+    const urlMap = { gmb: gmbWebhookUrl, ig: igWebhookUrl, linkedin: linkedinWebhookUrl, twitter: twitterWebhookUrl, youtube: youtubeWebhookUrl };
+    const headersMap = { gmb: gmbWebhookHeaders, ig: igWebhookHeaders, linkedin: linkedinWebhookHeaders, twitter: twitterWebhookHeaders, youtube: youtubeWebhookHeaders };
+    const url = urlMap[platform] || '';
+    const headersStr = headersMap[platform] || '';
 
-    if (platform === 'gmb') {
-      url = gmbWebhookUrl;
-      headersStr = gmbWebhookHeaders;
-    } else if (platform === 'ig') {
-      url = igWebhookUrl;
-      headersStr = igWebhookHeaders;
-    } else if (platform === 'linkedin') {
-      url = linkedinWebhookUrl;
-      headersStr = linkedinWebhookHeaders;
-    } else if (platform === 'twitter') {
-      url = twitterWebhookUrl;
-      headersStr = twitterWebhookHeaders;
-    } else if (platform === 'youtube') {
-      url = youtubeWebhookUrl;
-      headersStr = youtubeWebhookHeaders;
-    }
-    
-    if (!url || !url.trim()) {
-      addToast({ type: 'warning', title: 'Input Required', message: `Please enter a ${platform.toUpperCase()} Webhook URL first.` });
+    if (!url.trim()) {
+      addToast({ type: 'warning', title: 'URL Required', message: `Enter a ${platform.toUpperCase()} Webhook URL first.` });
       return;
     }
 
-    addToast({ type: 'info', title: 'Testing Connection', message: `Sending ping payload to ${platform.toUpperCase()} Webhook...` });
-    
-    try {
-      let headers = { "Content-Type": "application/json" };
-      if (headersStr && headersStr.trim()) {
-        try {
-          headers = { ...headers, ...JSON.parse(headersStr) };
-        } catch (e) {
-          addToast({ type: 'error', title: 'Header Syntax Error', message: 'Custom headers must be valid JSON.' });
-          return;
-        }
-      }
+    addToast({ type: 'info', title: 'Pinging…', message: `Sending test payload to ${platform.toUpperCase()} webhook via server.` });
 
-      await fetch(url, {
+    try {
+      const res = await authFetch(`${BACKEND_URL}/webhook-ping`, {
         method: 'POST',
-        headers: headers,
-        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          event: 'connection_test',
-          platform: platform,
-          clientName: activeClient.name,
-          timestamp: new Date().toISOString()
+          url: url.trim(),
+          customHeaders: headersStr.trim() || null,
+          platform,
+          workspace_id: activeClient?.id || null,
         })
       });
 
-      addToast({ type: 'success', title: 'Test Dispatched', message: 'Webhook connection test fired successfully!' });
+      const data = await res.json().catch(() => ({}));
+
+      if (data.success) {
+        addToast({ type: 'success', title: `Ping OK — HTTP ${data.status}`, message: 'Your automation platform should have received the test event.' });
+      } else if (res.ok) {
+        addToast({ type: 'warning', title: `HTTP ${data.status}`, message: data.response ? data.response.slice(0, 120) : 'Webhook returned a non-2xx status.' });
+      } else {
+        addToast({ type: 'error', title: 'Ping Failed', message: data.error || 'Server could not reach the webhook URL.' });
+      }
     } catch (err) {
       console.error(err);
-      addToast({ type: 'error', title: 'Test Failed', message: 'Unable to connect to the Webhook URL.' });
+      addToast({ type: 'error', title: 'Test Failed', message: 'Could not reach backend.' });
+    }
+  };
+
+  // 5c. Save payload template for a platform
+  const handleSavePayloadTemplate = async (platform, template) => {
+    if (!activeClient) return;
+    try {
+      const res = await authFetch(`${BACKEND_URL}/workspace/${activeClient.id}/webhook-config`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ platform, payload_template: template || null })
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        addToast({ type: 'error', title: 'Save Failed', message: data.error || 'Could not save payload template.' });
+        return;
+      }
+      const setters = { gmb: setGmbPayloadTemplate, ig: setIgPayloadTemplate, linkedin: setLinkedinPayloadTemplate, twitter: setTwitterPayloadTemplate, youtube: setYoutubePayloadTemplate };
+      if (setters[platform]) setters[platform](template || '');
+      addToast({ type: 'success', title: 'Template Saved', message: `${platform.toUpperCase()} payload template ${template ? 'updated' : 'reset to default'}.` });
+    } catch (err) {
+      console.error(err);
+      addToast({ type: 'error', title: 'Save Failed', message: 'Could not connect to server.' });
     }
   };
 
@@ -2735,6 +2923,12 @@ export default function Clients() {
                         >
                           <span>Test GMB Connection</span>
                         </button>
+
+                        <WebhookPayloadEditor
+                          platform="gmb"
+                          savedTemplate={gmbPayloadTemplate}
+                          onSave={handleSavePayloadTemplate}
+                        />
                       </div>
                     )}
 
@@ -2797,6 +2991,12 @@ export default function Clients() {
                         >
                           <span>Test Instagram Connection</span>
                         </button>
+
+                        <WebhookPayloadEditor
+                          platform="ig"
+                          savedTemplate={igPayloadTemplate}
+                          onSave={handleSavePayloadTemplate}
+                        />
                       </div>
                     )}
 
@@ -2859,6 +3059,12 @@ export default function Clients() {
                         >
                           <span>Test LinkedIn Connection</span>
                         </button>
+
+                        <WebhookPayloadEditor
+                          platform="linkedin"
+                          savedTemplate={linkedinPayloadTemplate}
+                          onSave={handleSavePayloadTemplate}
+                        />
                       </div>
                     )}
 
@@ -2921,6 +3127,12 @@ export default function Clients() {
                         >
                           <span>Test Twitter Connection</span>
                         </button>
+
+                        <WebhookPayloadEditor
+                          platform="twitter"
+                          savedTemplate={twitterPayloadTemplate}
+                          onSave={handleSavePayloadTemplate}
+                        />
                       </div>
                     )}
 
@@ -2983,6 +3195,12 @@ export default function Clients() {
                         >
                           <span>Test YouTube Connection</span>
                         </button>
+
+                        <WebhookPayloadEditor
+                          platform="youtube"
+                          savedTemplate={youtubePayloadTemplate}
+                          onSave={handleSavePayloadTemplate}
+                        />
                       </div>
                     )}
                   </div>

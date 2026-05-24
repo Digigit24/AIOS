@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, LayoutTemplate } from 'lucide-react';
+import { FileText, LayoutTemplate, Play, Settings, ExternalLink, RefreshCw } from 'lucide-react';
 import { authFetch, BACKEND_URL } from '../lib/api';
 
 function parseFileName(filename) {
@@ -22,6 +22,57 @@ export default function Pages() {
   const [activeFile, setActiveFile] = useState(null);
   const [loadingClients, setLoadingClients] = useState(true);
   const [loadingFiles, setLoadingFiles] = useState(false);
+  const [routineRunning, setRoutineRunning] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [routineUrl, setRoutineUrl] = useState(() => localStorage.getItem('agencyos_routine_url') || '');
+  const [routineToken, setRoutineToken] = useState(() => localStorage.getItem('agencyos_routine_token') || '');
+  const [routineDraft, setRoutineDraft] = useState({ url: '', token: '' });
+  const [toast, setToast] = useState(null);
+
+  const activeClient = clients.find(c => c.workspace_id === activeClientId) || null;
+
+  useEffect(() => {
+    if (toast) {
+      const t = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(t);
+    }
+  }, [toast]);
+
+  const handleRunRoutine = async () => {
+    if (!routineUrl) { openSettings(); return; }
+    setRoutineRunning(true);
+    setToast({ msg: 'Triggering routine — this may take a moment…', type: 'info' });
+    try {
+      const res = await fetch(routineUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(routineToken ? { Authorization: `Bearer ${routineToken}` } : {}),
+        },
+        body: JSON.stringify({ workspace_id: activeClientId }),
+      });
+      if (!res.ok) throw new Error(res.status);
+      setToast({ msg: 'Routine triggered — PM page will update shortly.', type: 'success' });
+    } catch {
+      setToast({ msg: 'Failed to trigger routine. Check URL and token in settings.', type: 'error' });
+    } finally {
+      setRoutineRunning(false);
+    }
+  };
+
+  const openSettings = () => {
+    setRoutineDraft({ url: routineUrl, token: routineToken });
+    setSettingsOpen(true);
+  };
+
+  const saveSettings = () => {
+    localStorage.setItem('agencyos_routine_url', routineDraft.url);
+    localStorage.setItem('agencyos_routine_token', routineDraft.token);
+    setRoutineUrl(routineDraft.url);
+    setRoutineToken(routineDraft.token);
+    setSettingsOpen(false);
+    setToast({ msg: 'Routine settings saved.', type: 'success' });
+  };
 
   useEffect(() => {
     authFetch(`${BACKEND_URL}/workspaces/pages-map`)
@@ -56,6 +107,7 @@ export default function Pages() {
       display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0,
       margin: '-24px -1px -24px -1px'
     }}>
+      <style>{`@keyframes pages-spin { to { transform: rotate(360deg); } }`}</style>
 
       {/* ── Sticky client tab bar ── */}
       <div style={{
@@ -104,6 +156,169 @@ export default function Pages() {
           );
         })}
       </div>
+
+      {/* ── Action bar ── */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        padding: '6px 12px',
+        borderBottom: '1px solid var(--border)',
+        background: 'var(--bg)',
+        flexShrink: 0,
+      }}>
+        <div style={{ flex: 1 }} />
+
+        {activeFile?.url && (
+          <a
+            href={activeFile.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              height: 30, padding: '0 10px', borderRadius: 8,
+              fontSize: 11, fontWeight: 700, cursor: 'pointer',
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              color: 'var(--secondary)', textDecoration: 'none',
+              transition: 'all 0.15s',
+            }}
+          >
+            <ExternalLink size={12} />
+            Open
+          </a>
+        )}
+
+        <button
+          onClick={handleRunRoutine}
+          disabled={routineRunning}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 5,
+            height: 30, padding: '0 12px', borderRadius: 8,
+            fontSize: 11, fontWeight: 700, cursor: routineRunning ? 'not-allowed' : 'pointer',
+            background: 'var(--accent)', color: '#fff', border: 'none',
+            opacity: routineRunning ? 0.7 : 1, transition: 'opacity 0.15s',
+          }}
+        >
+          {routineRunning
+            ? <RefreshCw size={12} style={{ animation: 'pages-spin 1s linear infinite' }} />
+            : <Play size={12} />}
+          {routineRunning ? 'Running…' : 'Run Routine'}
+        </button>
+
+        <button
+          onClick={openSettings}
+          title="Routine settings"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            height: 30, width: 30, borderRadius: 8,
+            background: 'var(--surface)', border: '1px solid var(--border)',
+            color: 'var(--secondary)', cursor: 'pointer', transition: 'all 0.15s',
+          }}
+        >
+          <Settings size={13} />
+        </button>
+      </div>
+
+      {/* ── Toast ── */}
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: 20, right: 20, zIndex: 100,
+          padding: '10px 16px', borderRadius: 10, fontSize: 12, fontWeight: 600,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+          background: toast.type === 'success' ? '#16a34a' : toast.type === 'error' ? '#dc2626' : 'var(--card)',
+          color: toast.type === 'info' ? 'var(--text)' : '#fff',
+          border: toast.type === 'info' ? '1px solid var(--border)' : 'none',
+          maxWidth: 320,
+        }}>
+          {toast.msg}
+        </div>
+      )}
+
+      {/* ── Routine Settings Modal ── */}
+      {settingsOpen && (
+        <>
+          <div
+            onClick={() => setSettingsOpen(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 50,
+              background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(2px)',
+            }}
+          />
+          <div style={{
+            position: 'fixed', zIndex: 51,
+            left: '50%', top: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 380, maxWidth: 'calc(100vw - 2rem)',
+            background: 'var(--card)', border: '1px solid var(--border)',
+            borderRadius: 14, boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
+            padding: '20px 22px',
+          }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>
+              Routine Settings
+            </p>
+            <p style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 16 }}>
+              Configure the webhook URL and API token used to trigger the PM report routine.
+            </p>
+
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--secondary)', display: 'block', marginBottom: 5 }}>
+                Webhook URL
+              </label>
+              <input
+                value={routineDraft.url}
+                onChange={e => setRoutineDraft(d => ({ ...d, url: e.target.value }))}
+                placeholder="https://api.claude.ai/v1/routines/..."
+                style={{
+                  width: '100%', boxSizing: 'border-box',
+                  padding: '7px 10px', borderRadius: 8, fontSize: 11,
+                  background: 'var(--surface)', border: '1px solid var(--border)',
+                  color: 'var(--text)', outline: 'none',
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: 18 }}>
+              <label style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--secondary)', display: 'block', marginBottom: 5 }}>
+                API Token
+              </label>
+              <input
+                type="password"
+                value={routineDraft.token}
+                onChange={e => setRoutineDraft(d => ({ ...d, token: e.target.value }))}
+                placeholder="Bearer token (stored locally)"
+                style={{
+                  width: '100%', boxSizing: 'border-box',
+                  padding: '7px 10px', borderRadius: 8, fontSize: 11,
+                  background: 'var(--surface)', border: '1px solid var(--border)',
+                  color: 'var(--text)', outline: 'none',
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={saveSettings}
+                style={{
+                  flex: 1, padding: '8px 0', borderRadius: 8,
+                  fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                  background: 'var(--accent)', color: '#fff', border: 'none',
+                }}
+              >
+                Save Settings
+              </button>
+              <button
+                onClick={() => setSettingsOpen(false)}
+                style={{
+                  padding: '8px 14px', borderRadius: 8,
+                  fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                  background: 'transparent', color: 'var(--secondary)',
+                  border: '1px solid var(--border)',
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* ── Two-column layout ── */}
       <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
