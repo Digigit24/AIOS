@@ -1,0 +1,657 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
+
+@import "tailwindcss";
+
+/* Dynamic font defaults */
+:root {
+  /* Default typography family */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-nav: 'DM Sans', sans-serif;
+  --font-display: 'Playfair Display', serif;
+
+  /* Spacing and sizing */
+  --sidebar-width: 260px;
+  --sidebar-offset: 260px;
+
+  /* Color System - Light Mode */
+  --bg:              #f8f6f5;    /* Page background */
+  --app-bg:          #fbfaf9;    /* App shell background (slightly lighter) */
+  --card:            #ffffff;    /* Card / panel surface */
+  --surface:         #f7f4f3;    /* Subtle inner surface (hover states) */
+  --surface-strong:  #f1ece9;    /* Stronger tinted surface */
+  --text:            #171717;    /* Primary text */
+  --secondary:       #6e6a67;    /* Secondary / label text */
+  --muted:           #a09a96;    /* Placeholder / faint text */
+  --border:          rgba(23,23,23,.07);  /* Default border */
+
+  /* Default dynamic primary colors (Indigo) */
+  --accent:          #4f46e5;
+  --accent-hover:    #4338ca;
+  --accent-tint:     rgba(79,70,229,.12);
+  --accent-soft:     rgba(79,70,229,.06);
+
+  /* Default dynamic secondary colors */
+  --secondary-accent: #06b6d4; /* Cyan */
+  --secondary-accent-tint: rgba(6,182,212,0.12);
+
+  --scrollbar-thumb: rgba(79,70,229,.55);
+  --scrollbar-track: rgba(23,23,23,.045);
+
+  --green:           #36b37e;
+  --amber:           #ffb84d;
+  --blue:            #5b8def;
+}
+
+[data-theme="dark"] {
+  /* Color System - Dark Mode */
+  --bg:              #121212;
+  --app-bg:          #151515;
+  --card:            #1b1b1b;
+  --surface:         #232323;
+  --surface-strong:  #2b2b2b;
+  --text:            #ffffff;
+  --secondary:       #b8b3ae;
+  --muted:           #7d7873;
+  --border:          rgba(255,255,255,.09);
+
+  /* Default dynamic primary colors (Pink in dark mode) */
+  --accent:          #ff5c8a;
+  --accent-hover:    #ff4b80;
+  --accent-tint:     rgba(255,92,138,.15);
+  --accent-soft:     rgba(255,92,138,.06);
+
+  /* Default dynamic secondary colors */
+  --secondary-accent: #a855f7; /* Violet */
+  --secondary-accent-tint: rgba(168,85,247,0.15);
+
+  --scrollbar-thumb: rgba(255,92,138,.55);
+  --scrollbar-track: rgba(255,255,255,.06);
+}
+
+/* Global Reset */
+*, ::before, ::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Premium Minimal Toast styling */
+.custom-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+  border-radius: 20px;
+  padding: 18px 22px !important; /* Bulletproof custom spacing */
+  color: #ffffff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+/* Custom Scrollbar Webkit */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 10px;
+  border: 2px solid transparent;
+}
+
+/* Typography styles */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.font-nav {
+  font-family: var(--font-nav);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+@media (max-width: 640px) {
+  h1 {
+    font-size: clamp(1.7rem, 7vw, 2.2rem) !important;
+    line-height: 1.08 !important;
+  }
+}
+
+/* Layout helper utilities */
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  background:
+    radial-gradient(circle at 4% 0%, var(--accent-soft), transparent 28rem),
+    linear-gradient(135deg, var(--bg), var(--app-bg));
+  transition: padding-left 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Responsive KPI grids */
+.responsive-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 20px;
+}
+
+/* Responsive Card grids */
+.responsive-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+/* Two-column layout */
+.responsive-two {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
+  gap: 24px;
+}
+@media (max-width: 900px) {
+  .responsive-two {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Safe Flex rows */
+.safe-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+}
+.safe-row > * {
+  min-width: 0;
+}
+
+.safe-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* Main Content Container spacing */
+.admin-main {
+  flex: 1;
+  min-width: 0;
+  padding: 24px;
+  margin-left: var(--sidebar-offset);
+  transition: margin-left 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (max-width: 1080px) {
+  .admin-main {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-main {
+    margin-left: 0 !important;
+    padding: 16px;
+    padding-top: 88px; /* account for topbar */
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-main {
+    padding: 12px;
+    padding-top: 88px;
+  }
+}
+
+/* Shared UI Components styling */
+.card {
+  background: var(--card);
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.03), 0 8px 30px rgba(0,0,0,0.04);
+  color: var(--text);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+}
+
+.card:has(table) {
+  overflow-x: auto;
+}
+
+/* Buttons */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--accent);
+  color: white;
+  padding: 0 18px;
+  font-weight: 600;
+  box-shadow: 0 10px 24px rgba(79, 70, 229, .18);
+  border: none;
+  cursor: pointer;
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), background 220ms ease;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Inputs and Forms */
+.input, .textarea {
+  min-height: 52px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: 0 14px;
+  outline: none;
+  color: var(--text);
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+  width: 100%;
+}
+
+.textarea {
+  padding: 14px;
+  min-height: 100px;
+}
+
+.input:focus, .textarea:focus {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  box-shadow: 0 0 0 4px var(--accent-tint);
+}
+
+/* Header action / theme buttons */
+.theme-icon-button {
+  display: grid;
+  place-items: center;
+  height: 44px;
+  width: 44px;
+  border-radius: 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.03), 0 8px 30px rgba(0,0,0,0.04);
+  color: var(--secondary);
+  cursor: pointer;
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), color 180ms ease, border-color 180ms ease;
+}
+
+.theme-icon-button:hover {
+  transform: scale(1.05);
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* Glass Panels */
+.soft-panel {
+  background: color-mix(in srgb, var(--card) 90%, transparent);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.025), 0 12px 42px rgba(0,0,0,0.045);
+  backdrop-filter: blur(18px);
+}
+
+/* Desktop Sidedrawer & Mobile Bottomsheet Layout */
+.drawer-panel {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  top: 16px;
+  width: min(440px, calc(100vw - 32px));
+  border-radius: 32px;
+  background: var(--card);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1), opacity 380ms ease;
+}
+
+/* Custom overlay backdrop */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 45;
+  transition: opacity 300ms ease;
+}
+
+/* Bottom Sheet layout for mobile drawer */
+@media (max-width: 900px) {
+  .drawer-panel {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 80vh;
+    border-radius: 28px 28px 0 0;
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.08);
+  }
+}
+
+/* Sidebar collapses state */
+.app-shell.sidebar-collapsed {
+  --sidebar-offset: 88px;
+}
+.app-shell.sidebar-collapsed .admin-main {
+  margin-left: 88px !important;
+}
+
+@media (max-width: 900px) {
+  .app-shell.sidebar-collapsed .admin-main {
+    margin-left: 0 !important;
+  }
+}
+
+/* Shimmer Loading Animations */
+.shimmer {
+  background: linear-gradient(90deg, var(--surface-strong) 25%, var(--app-bg) 37%, var(--surface-strong) 63%);
+  background-size: 400% 100%;
+  animation: shimmer-effect 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer-effect {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+/* Page Entry Transitions */
+.fade-page {
+  animation: fade-in 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Interactive tables */
+.table-row {
+  transition: background 180ms ease, transform 180ms ease;
+}
+.table-row:hover {
+  background: var(--accent-soft);
+}
+
+/* Responsive Hide Utilities */
+@media (max-width: 900px) {
+  .mobile-hide {
+    display: none !important;
+  }
+  .mobile-sidebar-trigger {
+    display: grid !important;
+  }
+  .desktop-sidebar-trigger {
+    display: none !important;
+  }
+}
+
+/* ==========================================================================
+   PREMIUM MINIMALIST CUSTOM UI STYLING (Sidebar & Sidedrawer Polish)
+   ========================================================================== */
+
+/* Premium App Sidebar layout */
+.app-sidebar {
+  position: fixed;
+  top: 16px;
+  bottom: 16px;
+  left: 16px;
+  z-index: 45;
+  border-radius: 28px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--card) 78%, transparent);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02), 0 20px 50px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 300ms cubic-bezier(0.22, 1, 0.36, 1), transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sidebar-logo-block {
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  shrink: 0;
+}
+
+.sidebar-nav-scroller {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 12px 20px 12px;
+}
+
+.sidebar-label {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+  padding: 16px 16px 6px 16px;
+  display: block;
+}
+
+.sidebar-link-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  border-radius: 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--secondary);
+  transition: all 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  cursor: pointer;
+  margin-bottom: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar-link-btn:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.sidebar-link-btn-active {
+  background: var(--accent-tint) !important;
+  color: var(--accent) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.sidebar-link-btn-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 11px;
+  bottom: 11px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: var(--accent);
+}
+
+.sidebar-user-island {
+  padding: 12px 14px;
+  margin: 12px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 200ms ease;
+}
+
+/* Sidedrawer Layout Polish with full padding constraints */
+.drawer-header {
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--card);
+}
+
+.drawer-body {
+  padding: 28px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.drawer-footer {
+  padding: 20px 28px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  gap: 16px;
+}
+
+/* Sidedrawer components spacing details */
+.scheme-toggle-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.scheme-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 48px;
+  border-radius: 16px;
+  border: 1.5px solid var(--border);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--secondary);
+  background: var(--card);
+  transition: all 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  cursor: pointer;
+}
+
+.scheme-toggle-btn:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+.scheme-toggle-btn.active {
+  border-color: var(--accent) !important;
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
+  box-shadow: inset 0 0 0 0.5px var(--accent);
+}
+
+/* Color swatch presets */
+.color-swatch-list {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.color-swatch-circle {
+  aspect-ratio: 1;
+  width: 100%;
+  border-radius: 50%;
+  border: 3px solid var(--card);
+  box-shadow: 0 0 0 1.5px var(--border);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 250ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.color-swatch-circle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 2px var(--text);
+}
+
+.color-swatch-circle.active {
+  transform: scale(1.04);
+  box-shadow: 0 0 0 2.5px var(--text);
+}
+
+/* Fonts choice cards */
+.font-list-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.font-option-card {
+  width: 100%;
+  padding: 16px 20px;
+  border-radius: 18px;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: all 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  cursor: pointer;
+}
+
+.font-option-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  transform: translateY(-1px);
+}
+
+.font-option-card.active {
+  border-color: var(--accent) !important;
+  background: var(--accent-soft) !important;
+  box-shadow: inset 0 0 0 0.5px var(--accent);
+}

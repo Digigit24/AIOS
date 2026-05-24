@@ -1,0 +1,13 @@
+{
+  "name": "agencyos-starter",
+  "version": "1.0.0",
+  "description": "Premium Node.js and React Starter Template",
+  "main": "index.js",
+  "scripts": {
+    "install:all": "npm install && npm install --prefix frontend",
+    "dev": "npm run dev --prefix frontend"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Build output
+frontend/dist/
+
+# Environment variables (keep secrets safe)
+.env
+frontend/.env
+*.env.local
+
+# Vite cache
+frontend/vite.config.js.timestamp-*
+
+# OS files
+.DS_Store
+Thumbs.db
