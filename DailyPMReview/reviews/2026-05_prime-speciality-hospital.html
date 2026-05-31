@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prime Speciality Hospital — PM Daily Review · May 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: #f4f5f7;
+  color: #111827;
+  min-height: 100vh;
+  padding: 32px 20px 48px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  max-width: 820px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e8eaed;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  padding: 24px;
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  margin-bottom: 10px;
+  padding-left: 2px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 99px;
+  border: 1.5px solid;
+  white-space: nowrap;
+}
+.chip-indigo { background: #eef2ff; color: #4f46e5; border-color: #c7d2fe; }
+.chip-green  { background: #ecfdf5; color: #059669; border-color: #a7f3d0; }
+.chip-amber  { background: #fffbeb; color: #d97706; border-color: #fcd34d; }
+.chip-red    { background: #fef2f2; color: #dc2626; border-color: #fca5a5; }
+.chip-gray   { background: #f3f4f6; color: #6b7280; border-color: #e5e7eb; }
+.chip-tag    { background: #f0f0ff; color: #6366f1; border-color: #e0e0ff; font-size: 10px; font-weight: 700; }
+
+hr { border: none; border-top: 1px solid #f0f0f0; }
+
+.progress-track { height: 8px; background: #f0f0f0; border-radius: 99px; overflow: hidden; }
+.progress-fill  { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #6366f1, #818cf8); }
+
+.dot-done    { background: #10b981; border: 2px solid #10b981; box-shadow: 0 0 0 3px #d1fae5; }
+.dot-next    { background: #f59e0b; border: 2px solid #f59e0b; box-shadow: 0 0 0 3px #fef3c7; }
+.dot-blocked { background: #ef4444; border: 2px solid #ef4444; box-shadow: 0 0 0 3px #fee2e2; }
+.dot-pending { background: #fff;    border: 2px solid #d1d5db; }
+
+.blocker { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 10px; border-left: 3.5px solid; }
+.blocker-red   { background: #fff5f5; border-color: #ef4444; }
+.blocker-amber { background: #fffdf0; border-color: #f59e0b; }
+
+.action-item { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; background: #fafafa; border: 1px solid #f0f0f0; border-radius: 10px; }
+.action-num  { width: 24px; height: 24px; border-radius: 8px; background: #eef2ff; color: #4f46e5; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+.stat-card  { background: #fafafa; border: 1px solid #f0f0f0; border-radius: 12px; padding: 16px; }
+.stat-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; }
+.stat-value { font-size: 26px; font-weight: 800; color: #111827; line-height: 1.1; margin-top: 4px; }
+.stat-sub   { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+
+.link-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: #fafafa; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 12px; font-weight: 600; color: #374151; text-decoration: none; transition: border-color 0.15s, background 0.15s; }
+.link-btn:hover { border-color: #6366f1; background: #f0f0ff; color: #4f46e5; }
+
+@media (max-width: 560px) {
+  body { padding: 16px 12px 32px; }
+  .card { padding: 18px; }
+  .stat-value { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 1. PAGE HEADER CARD -->
+  <div class="card" style="padding: 28px 28px 24px;">
+    <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:18px;">
+      <div>
+        <p style="font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#9ca3af; margin-bottom:6px;">
+          Client Progress Report
+        </p>
+        <h1 style="font-size:24px; font-weight:800; color:#111827; letter-spacing:-0.02em; line-height:1.2;">
+          Prime Speciality Hospital
+        </h1>
+        <p style="font-size:13px; color:#6b7280; margin-top:4px; font-weight:500;">
+          Dr. Pankaj Bhalerao · MBBS, MS (Gen Surgery), FMAS · 10+ years
+        </p>
+        <p style="font-size:12px; color:#9ca3af; margin-top:2px;">
+          Minimally Invasive Surgery — Laparoscopic &amp; Laser Proctology
+        </p>
+      </div>
+      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px; flex-shrink:0;">
+        <span class="chip chip-amber">🟡 Setting Up</span>
+        <span style="font-size:11px; color:#9ca3af; font-weight:500;">May 2026</span>
+        <span style="font-size:10px; color:#d1d5db; font-weight:500;">Last updated: 2026-05-20</span>
+      </div>
+    </div>
+
+    <hr style="margin-bottom:18px;">
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:12px 20px; margin-bottom:18px;">
+      <div>
+        <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#9ca3af; margin-bottom:3px;">Location</p>
+        <p style="font-size:13px; font-weight:600; color:#374151;">Moshi, PCMC, Pune, MH</p>
+      </div>
+      <div>
+        <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#9ca3af; margin-bottom:3px;">Website</p>
+        <a href="https://primespecialityhospital.in" target="_blank" style="font-size:13px; font-weight:600; color:#4f46e5; text-decoration:none;">primespecialityhospital.in ↗</a>
+      </div>
+      <div>
+        <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#9ca3af; margin-bottom:3px;">WhatsApp</p>
+        <p style="font-size:13px; font-weight:600; color:#374151;">+91 94226 68921</p>
+      </div>
+      <div>
+        <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#9ca3af; margin-bottom:3px;">Active Since</p>
+        <p style="font-size:13px; font-weight:600; color:#374151;">28 Apr 2026</p>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-wrap:wrap; gap:6px;">
+      <span class="chip chip-tag">Social Media</span>
+      <span class="chip chip-tag">SEO</span>
+      <span class="chip chip-tag">GMB</span>
+      <span class="chip chip-tag">Website</span>
+      <span class="chip chip-tag">Branding &amp; Design</span>
+    </div>
+  </div>
+
+  <!-- 2. FOUNDATION CHAIN CARD -->
+  <div class="card">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+      <div>
+        <p style="font-size:11px; font-weight:700; letter-spacing:0.09em; text-transform:uppercase; color:#9ca3af; margin-bottom:4px;">Foundation Chain</p>
+        <h2 style="font-size:16px; font-weight:800; color:#111827;">5 of 11 steps complete</h2>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:26px; font-weight:800; color:#6366f1;">45%</span>
+        <span style="font-size:12px; color:#9ca3af; font-weight:500;">of foundation</span>
+      </div>
+    </div>
+
+    <div class="progress-track" style="margin-bottom:20px;">
+      <div class="progress-fill" style="width:45%;"></div>
+    </div>
+
+    <!-- Segmented step pills -->
+    <div style="display:flex; gap:4px; margin-bottom:4px;">
+      <!-- 00 Research — done -->
+      <div style="flex:1; height:4px; border-radius:2px; background:#10b981;" title="00 Research — Done"></div>
+      <!-- 01 Design Instructions — done -->
+      <div style="flex:1; height:4px; border-radius:2px; background:#10b981;" title="01 Design Instructions — Done"></div>
+      <!-- 02 SEO Foundation — done -->
+      <div style="flex:1; height:4px; border-radius:2px; background:#10b981;" title="02 SEO Foundation — Done"></div>
+      <!-- 03 GMB Foundation — done -->
+      <div style="flex:1; height:4px; border-radius:2px; background:#10b981;" title="03 GMB Foundation — Done"></div>
+      <!-- 04 Brand Brain — done -->
+      <div style="flex:1; height:4px; border-radius:2px; background:#10b981;" title="04 Brand Brain — Done"></div>
+      <!-- 05 Design System — next up -->
+      <div style="flex:1; height:4px; border-radius:2px; background:#f59e0b;" title="05 Design System — Next Up"></div>
+      <!-- 06 Website Brief — pending -->
+      <div style="flex:1; height:4px; border-radius:2px; background:#e5e7eb;" title="06 Website Brief — Pending"></div>
+      <!-- 07 Audit — blocked -->
+      <div style="flex:1; height:4px; border-radius:2px; background:#ef4444;" title="07 Audit — Blocked"></div>
+      <!-- 08 Strategy — blocked -->
+      <div style="flex:1; height:4px; border-radius:2px; background:#ef4444;" title="08 Strategy — Blocked"></div>
+      <!-- 09 Task Creator — blocked -->
+      <div style="flex:1; height:4px; border-radius:2px; background:#ef4444;" title="09 Task Creator — Blocked"></div>
+      <!-- 10 Content Calendar — blocked -->
+      <div style="flex:1; height:4px; border-radius:2px; background:#ef4444;" title="10 Content Calendar — Blocked"></div>
+    </div>
+    <!-- Step numbers -->
+    <div style="display:flex; gap:4px;">
+      <p style="flex:1; text-align:center; font-size:9px; font-weight:600; color:#059669;">00</p>
+      <p style="flex:1; text-align:center; font-size:9px; font-weight:600; color:#059669;">01</p>
+      <p style="flex:1; text-align:center; font-size:9px; font-weight:600; color:#059669;">02</p>
+      <p style="flex:1; text-align:center; font-size:9px; font-weight:600; color:#059669;">03</p>
+      <p style="flex:1; text-align:center; font-size:9px; font-weight:600; color:#059669;">04</p>
+      <p style="flex:1; text-align:center; font-size:9px; font-weight:600; color:#d97706;">05</p>
+      <p style="flex:1; text-align:center; font-size:9px; font-weight:600; color:#9ca3af;">06</p>
+      <p style="flex:1; text-align:center; font-size:9px; font-weight:600; color:#dc2626;">07</p>
+      <p style="flex:1; text-align:center; font-size:9px; font-weight:600; color:#dc2626;">08</p>
+      <p style="flex:1; text-align:center; font-size:9px; font-weight:600; color:#dc2626;">09</p>
+      <p style="flex:1; text-align:center; font-size:9px; font-weight:600; color:#dc2626;">10</p>
+    </div>
+  </div>
+
+  <!-- 3. MAY 2026 SNAPSHOT -->
+  <div class="card">
+    <p class="section-label">May 2026 Snapshot</p>
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:12px;">
+      <div class="stat-card">
+        <span class="stat-label">Content Published</span>
+        <div class="stat-value" style="color:#9ca3af;">0</div>
+        <span class="stat-sub">Setup phase — not started</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Tasks Completed</span>
+        <div class="stat-value" style="color:#9ca3af;">0/0</div>
+        <span class="stat-sub">No tasks assigned yet</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Meetings Held</span>
+        <div class="stat-value" style="color:#9ca3af;">0</div>
+        <span class="stat-sub">This month</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Shoots Completed</span>
+        <div class="stat-value" style="color:#9ca3af;">0</div>
+        <span class="stat-sub">Not yet scheduled</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. TIMELINE CARD -->
+  <div class="card">
+    <p class="section-label">Step-by-step</p>
+    <h2 style="font-size:16px; font-weight:800; color:#111827; margin-bottom:24px;">Foundation Chain — Full Timeline</h2>
+
+    <div style="display:flex; flex-direction:column; gap:0;">
+
+      <!-- 00 Research — DONE -->
+      <div style="display:flex; gap:16px; padding-bottom:22px; position:relative;">
+        <div style="display:flex; flex-direction:column; align-items:center; width:24px; flex-shrink:0;">
+          <div class="dot-done" style="width:12px; height:12px; border-radius:50%; flex-shrink:0; margin-top:3px;"></div>
+          <div style="width:1.5px; flex:1; background:#e5e7eb; margin-top:6px;"></div>
+        </div>
+        <div style="flex:1; padding-bottom:4px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+            <p style="font-size:13px; font-weight:700; color:#111827;">00 · Research</p>
+            <span class="chip chip-green" style="font-size:10px;">Done</span>
+          </div>
+          <p style="font-size:12px; color:#6b7280; line-height:1.55;">Output saved in Brand &amp; Strategy workspace.</p>
+        </div>
+      </div>
+
+      <!-- 01 Design Instructions — DONE -->
+      <div style="display:flex; gap:16px; padding-bottom:22px; position:relative;">
+        <div style="display:flex; flex-direction:column; align-items:center; width:24px; flex-shrink:0;">
+          <div class="dot-done" style="width:12px; height:12px; border-radius:50%; flex-shrink:0; margin-top:3px;"></div>
+          <div style="width:1.5px; flex:1; background:#e5e7eb; margin-top:6px;"></div>
+        </div>
+        <div style="flex:1; padding-bottom:4px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+            <p style="font-size:13px; font-weight:700; color:#111827;">01 · Design Instructions</p>
+            <span class="chip chip-green" style="font-size:10px;">Done</span>
+          </div>
+          <p style="font-size:12px; color:#6b7280; line-height:1.55;">AI Prompting Guide created; project files organised.</p>
+        </div>
+      </div>
+
+      <!-- 02 SEO Foundation — DONE -->
+      <div style="display:flex; gap:16px; padding-bottom:22px; position:relative;">
+        <div style="display:flex; flex-direction:column; align-items:center; width:24px; flex-shrink:0;">
+          <div class="dot-done" style="width:12px; height:12px; border-radius:50%; flex-shrink:0; margin-top:3px;"></div>
+          <div style="width:1.5px; flex:1; background:#e5e7eb; margin-top:6px;"></div>
+        </div>
+        <div style="flex:1; padding-bottom:4px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+            <p style="font-size:13px; font-weight:700; color:#111827;">02 · SEO Foundation</p>
+            <span class="chip chip-green" style="font-size:10px;">Done</span>
+          </div>
+          <p style="font-size:12px; color:#6b7280; line-height:1.55;">Cost ranges from Practo &amp; HexaHealth confirmed. Dr. Bhalerao's specific procedure pricing still needed before service pages go live.</p>
+        </div>
+      </div>
+
+      <!-- 03 GMB Foundation — DONE -->
+      <div style="display:flex; gap:16px; padding-bottom:22px; position:relative;">
+        <div style="display:flex; flex-direction:column; align-items:center; width:24px; flex-shrink:0;">
+          <div class="dot-done" style="width:12px; height:12px; border-radius:50%; flex-shrink:0; margin-top:3px;"></div>
+          <div style="width:1.5px; flex:1; background:#e5e7eb; margin-top:6px;"></div>
+        </div>
+        <div style="flex:1; padding-bottom:4px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+            <p style="font-size:13px; font-weight:700; color:#111827;">03 · GMB Foundation</p>
+            <span class="chip chip-green" style="font-size:10px;">Done</span>
+          </div>
+          <p style="font-size:12px; color:#6b7280; line-height:1.55;">Live Windsor MCP data verified May 2026.</p>
+        </div>
+      </div>
+
+      <!-- 04 Brand Brain — DONE -->
+      <div style="display:flex; gap:16px; padding-bottom:22px; position:relative;">
+        <div style="display:flex; flex-direction:column; align-items:center; width:24px; flex-shrink:0;">
+          <div class="dot-done" style="width:12px; height:12px; border-radius:50%; flex-shrink:0; margin-top:3px;"></div>
+          <div style="width:1.5px; flex:1; background:#e5e7eb; margin-top:6px;"></div>
+        </div>
+        <div style="flex:1; padding-bottom:4px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+            <p style="font-size:13px; font-weight:700; color:#111827;">04 · Brand Brain</p>
+            <span class="chip chip-green" style="font-size:10px;">Done</span>
+          </div>
+          <p style="font-size:12px; color:#6b7280; line-height:1.55;">Brand Brief v1.0 complete and saved in Brand &amp; Strategy.</p>
+        </div>
+      </div>
+
+      <!-- 05 Design System — NEXT UP -->
+      <div style="display:flex; gap:16px; padding-bottom:22px;">
+        <div style="display:flex; flex-direction:column; align-items:center; width:24px; flex-shrink:0;">
+          <div class="dot-next" style="width:12px; height:12px; border-radius:50%; flex-shrink:0; margin-top:3px;"></div>
+          <div style="width:1.5px; flex:1; background:#e5e7eb; margin-top:6px;"></div>
+        </div>
+        <div style="flex:1; padding:14px; background:#fffdf0; border:1px solid #fcd34d; border-radius:10px; margin-bottom:4px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:5px;">
+            <p style="font-size:13px; font-weight:700; color:#92400e;">05 · Design System</p>
+            <span class="chip chip-amber" style="font-size:10px;">Next Up →</span>
+          </div>
+          <p style="font-size:12px; color:#92400e; line-height:1.55;">Blocked on logo files (PNG + SVG). Ready to run Prompt 05 the moment logos arrive from Dr. Bhalerao.</p>
+        </div>
+      </div>
+
+      <!-- 06 Website Brief — PENDING -->
+      <div style="display:flex; gap:16px; padding-bottom:22px;">
+        <div style="display:flex; flex-direction:column; align-items:center; width:24px; flex-shrink:0;">
+          <div class="dot-pending" style="width:12px; height:12px; border-radius:50%; flex-shrink:0; margin-top:3px;"></div>
+          <div style="width:1.5px; flex:1; background:#e5e7eb; margin-top:6px;"></div>
+        </div>
+        <div style="flex:1; padding-bottom:4px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+            <p style="font-size:13px; font-weight:700; color:#9ca3af;">06 · Website Brief</p>
+            <span class="chip chip-gray" style="font-size:10px;">Pending</span>
+          </div>
+          <p style="font-size:12px; color:#9ca3af; line-height:1.55; margin-top:4px;">Starts after Design System (05) is complete. Site confirmed: primespecialityhospital.in</p>
+        </div>
+      </div>
+
+      <!-- 07 Audit — BLOCKED -->
+      <div style="display:flex; gap:16px; padding-bottom:22px;">
+        <div style="display:flex; flex-direction:column; align-items:center; width:24px; flex-shrink:0;">
+          <div class="dot-blocked" style="width:12px; height:12px; border-radius:50%; flex-shrink:0; margin-top:3px;"></div>
+          <div style="width:1.5px; flex:1; background:#e5e7eb; margin-top:6px;"></div>
+        </div>
+        <div style="flex:1; padding-bottom:4px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+            <p style="font-size:13px; font-weight:700; color:#111827;">07 · Audit</p>
+            <span class="chip chip-red" style="font-size:10px;">Blocked</span>
+          </div>
+          <p style="font-size:12px; color:#6b7280; line-height:1.55;">Needs GA4 + Google Search Console access. Client must add PM as user.</p>
+        </div>
+      </div>
+
+      <!-- 08 Strategy — BLOCKED -->
+      <div style="display:flex; gap:16px; padding-bottom:22px;">
+        <div style="display:flex; flex-direction:column; align-items:center; width:24px; flex-shrink:0;">
+          <div class="dot-blocked" style="width:12px; height:12px; border-radius:50%; flex-shrink:0; margin-top:3px;"></div>
+          <div style="width:1.5px; flex:1; background:#e5e7eb; margin-top:6px;"></div>
+        </div>
+        <div style="flex:1; padding-bottom:4px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+            <p style="font-size:13px; font-weight:700; color:#111827;">08 · Strategy</p>
+            <span class="chip chip-red" style="font-size:10px;">Blocked</span>
+          </div>
+          <p style="font-size:12px; color:#6b7280; line-height:1.55;">Depends on Audit (07) completion.</p>
+        </div>
+      </div>
+
+      <!-- 09 Task Creator — BLOCKED -->
+      <div style="display:flex; gap:16px; padding-bottom:22px;">
+        <div style="display:flex; flex-direction:column; align-items:center; width:24px; flex-shrink:0;">
+          <div class="dot-blocked" style="width:12px; height:12px; border-radius:50%; flex-shrink:0; margin-top:3px;"></div>
+          <div style="width:1.5px; flex:1; background:#e5e7eb; margin-top:6px;"></div>
+        </div>
+        <div style="flex:1; padding-bottom:4px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+            <p style="font-size:13px; font-weight:700; color:#111827;">09 · Task Creator</p>
+            <span class="chip chip-red" style="font-size:10px;">Blocked</span>
+          </div>
+          <p style="font-size:12px; color:#6b7280; line-height:1.55;">Depends on Strategy (08) completion.</p>
+        </div>
+      </div>
+
+      <!-- 10 Content Calendar — BLOCKED (last node, no connector line) -->
+      <div style="display:flex; gap:16px;">
+        <div style="display:flex; flex-direction:column; align-items:center; width:24px; flex-shrink:0;">
+          <div class="dot-blocked" style="width:12px; height:12px; border-radius:50%; flex-shrink:0; margin-top:3px;"></div>
+        </div>
+        <div style="flex:1;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+            <p style="font-size:13px; font-weight:700; color:#111827;">10 · Content Calendar</p>
+            <span class="chip chip-red" style="font-size:10px;">Blocked</span>
+          </div>
+          <p style="font-size:12px; color:#6b7280; line-height:1.55; margin-top:4px;">Depends on Strategy (08) completion.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 5. BLOCKERS CARD -->
+  <div class="card">
+    <p class="section-label">Blockers</p>
+    <h2 style="font-size:16px; font-weight:800; color:#111827; margin-bottom:16px;">Items Requiring Action</h2>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+
+      <div class="blocker blocker-red">
+        <span style="font-size:18px; flex-shrink:0;">🔴</span>
+        <div>
+          <p style="font-size:13px; font-weight:700; color:#991b1b;">Logo Files Not Received</p>
+          <p style="font-size:12px; color:#b91c1c; margin-top:4px; line-height:1.5;">PNG + SVG logo files have not been collected from Dr. Bhalerao. This gates Prompt 05 (Design System) — no design work can proceed until logos are in hand.</p>
+        </div>
+      </div>
+
+      <div class="blocker blocker-red">
+        <span style="font-size:18px; flex-shrink:0;">🔴</span>
+        <div>
+          <p style="font-size:13px; font-weight:700; color:#991b1b;">Full NAP Not Confirmed</p>
+          <p style="font-size:12px; color:#b91c1c; margin-top:4px; line-height:1.5;">Hospital address and PIN code are missing. NAP (Name, Address, Phone) must be confirmed before GMB and local SEO work can be finalised.</p>
+        </div>
+      </div>
+
+      <div class="blocker blocker-amber">
+        <span style="font-size:18px; flex-shrink:0;">🟡</span>
+        <div>
+          <p style="font-size:13px; font-weight:700; color:#92400e;">Procedure Cost Ranges Unconfirmed</p>
+          <p style="font-size:12px; color:#b45309; margin-top:4px; line-height:1.5;">Benchmark cost ranges (Practo / HexaHealth) are captured, but Dr. Bhalerao's specific pricing for laparoscopic, piles laser, and hernia procedures has not been confirmed by the client. Required before any service page goes live.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 6. ACTION ITEMS CARD -->
+  <div class="card">
+    <p class="section-label">Next Steps</p>
+    <h2 style="font-size:16px; font-weight:800; color:#111827; margin-bottom:16px;">Immediate Actions</h2>
+    <div style="display:flex; flex-direction:column; gap:8px;">
+
+      <div class="action-item">
+        <div class="action-num">1</div>
+        <div>
+          <p style="font-size:13px; font-weight:700; color:#111827;">WhatsApp Dr. Bhalerao for Logo Files</p>
+          <p style="font-size:12px; color:#6b7280; margin-top:3px; line-height:1.5;">Request PNG + SVG logo files via +91 94226 68921. This unblocks Prompt 05 (Design System) and unlocks the rest of the design chain.</p>
+        </div>
+      </div>
+
+      <div class="action-item">
+        <div class="action-num">2</div>
+        <div>
+          <p style="font-size:13px; font-weight:700; color:#111827;">Confirm Full Hospital Address &amp; PIN Code</p>
+          <p style="font-size:12px; color:#6b7280; margin-top:3px; line-height:1.5;">Get the complete NAP — physical address with Moshi / PCMC area and PIN code — to finalise GMB and local SEO setup.</p>
+        </div>
+      </div>
+
+      <div class="action-item">
+        <div class="action-num">3</div>
+        <div>
+          <p style="font-size:13px; font-weight:700; color:#111827;">Collect Specific Procedure Pricing from Client</p>
+          <p style="font-size:12px; color:#6b7280; margin-top:3px; line-height:1.5;">Confirm Dr. Bhalerao's actual cost ranges for laparoscopic surgery, piles laser treatment, and hernia procedures before service pages are drafted.</p>
+        </div>
+      </div>
+
+      <div class="action-item">
+        <div class="action-num">4</div>
+        <div>
+          <p style="font-size:13px; font-weight:700; color:#111827;">Get GA4 + Search Console Access</p>
+          <p style="font-size:12px; color:#6b7280; margin-top:3px; line-height:1.5;">Ask client to add PM as a user in Google Analytics 4 and Google Search Console. Required to run Prompt 07 (Audit).</p>
+        </div>
+      </div>
+
+      <div class="action-item">
+        <div class="action-num">5</div>
+        <div>
+          <p style="font-size:13px; font-weight:700; color:#111827;">Run Prompt 05 — Design System</p>
+          <p style="font-size:12px; color:#6b7280; margin-top:3px; line-height:1.5;">Execute Design System prompt immediately once logo files are received. All subsequent design and content tasks depend on this step.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 7. LINKS / RESOURCES CARD -->
+  <div class="card">
+    <p class="section-label">Resources</p>
+    <h2 style="font-size:16px; font-weight:800; color:#111827; margin-bottom:14px;">Key Links</h2>
+    <div style="display:flex; flex-wrap:wrap; gap:8px;">
+      <a href="https://primespecialityhospital.in" target="_blank" class="link-btn">↗ Hospital Website</a>
+      <a href="https://wa.me/919422668921" target="_blank" class="link-btn">↗ WhatsApp Dr. Bhalerao</a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

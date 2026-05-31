@@ -51,7 +51,11 @@ import {
   ExternalLink,
   FileText,
   LayoutTemplate,
-  Maximize2
+  Maximize2,
+  Link2,
+  RefreshCw,
+  ShieldCheck,
+  Unplug
 } from 'lucide-react';
 
 const DEFAULT_PAYLOADS = {
@@ -273,6 +277,7 @@ export default function Clients() {
   const [newClientLinkedinPromised, setNewClientLinkedinPromised] = useState(10);
   const [newClientTwitterPromised, setNewClientTwitterPromised] = useState(15);
   const [newClientYoutubePromised, setNewClientYoutubePromised] = useState(5);
+  const [newClientVideoPromised, setNewClientVideoPromised] = useState(0);
   
   // Client Settings Sidedrawer States
   const [isSettingsOpen, setSettingsOpen] = useState(false);
@@ -284,8 +289,16 @@ export default function Clients() {
   const [editLinkedinPromised, setEditLinkedinPromised] = useState(10);
   const [editTwitterPromised, setEditTwitterPromised] = useState(15);
   const [editYoutubePromised, setEditYoutubePromised] = useState(5);
+  const [editVideoPromised, setEditVideoPromised] = useState(0);
   const [editClientNotes, setEditClientNotes] = useState('');
   const [editClientActive, setEditClientActive] = useState(true);
+  const [integrations, setIntegrations] = useState([]);
+  const [sharedIntegrations, setSharedIntegrations] = useState([]);
+  const [integrationsConfigured, setIntegrationsConfigured] = useState(false);
+  const [integrationsLoading, setIntegrationsLoading] = useState(false);
+  const [integrationAction, setIntegrationAction] = useState('');
+  const [selectedSharedAccounts, setSelectedSharedAccounts] = useState({});
+  const [integrationAssets, setIntegrationAssets] = useState({});
 
   // Bookmarks
   const [bookmarks, setBookmarks] = useState([]);
@@ -538,6 +551,7 @@ export default function Clients() {
         linkedin_promised: ws.linkedin_promised,
         twitter_promised: ws.twitter_promised,
         youtube_promised: ws.youtube_promised,
+        video_promised: ws.video_promised,
         gmb_webhook_url: ws.gmb_webhook_url,
         gmb_webhook_headers: ws.gmb_webhook_headers,
         gmb_webhook_active: ws.gmb_webhook_active,
@@ -592,6 +606,7 @@ export default function Clients() {
         setEditLinkedinPromised(match.linkedin_promised !== undefined ? match.linkedin_promised : 10);
         setEditTwitterPromised(match.twitter_promised !== undefined ? match.twitter_promised : 15);
         setEditYoutubePromised(match.youtube_promised !== undefined ? match.youtube_promised : 5);
+        setEditVideoPromised(match.video_promised !== undefined ? match.video_promised : 0);
 
         // Hydrate active platforms
         const platformsList = match.active_platforms ? match.active_platforms.split(',') : ['gmb', 'instagram'];
@@ -632,6 +647,7 @@ export default function Clients() {
         fetchPosts(activeClientId);
         fetchBookmarks(activeClientId);
         fetchPmFiles(activeClientId);
+        fetchIntegrations(activeClientId);
       }
     }
   }, [activeClientId, clients]);
@@ -709,6 +725,222 @@ export default function Clients() {
     }
   };
 
+  const fetchIntegrations = async (clientId) => {
+    if (!clientId) return;
+    setIntegrationsLoading(true);
+    try {
+      const res = await authFetch(`${BACKEND_URL}/workspace/${clientId}/integrations`, {
+        headers: {}
+      });
+      if (!res.ok) throw new Error("Failed to load integrations");
+      const data = await res.json();
+      setIntegrations(data.integrations || []);
+      setSharedIntegrations(data.shared || []);
+      setIntegrationsConfigured(!!data.configured);
+      const defaults = {};
+      (data.integrations || []).forEach((item) => {
+        if (item.connected_account_id) defaults[item.toolkit] = item.connected_account_id;
+      });
+      (data.shared || []).forEach((item) => {
+        if (!defaults[item.toolkit] && item.connections?.length) {
+          const active = item.connections.find((conn) => String(conn.status).toUpperCase() === 'ACTIVE');
+          if (active?.connected_account_id) defaults[item.toolkit] = active.connected_account_id;
+        }
+      });
+      setSelectedSharedAccounts(defaults);
+    } catch (err) {
+      console.error("Error fetching integrations:", err);
+      setIntegrations([]);
+      setSharedIntegrations([]);
+      setIntegrationsConfigured(false);
+    } finally {
+      setIntegrationsLoading(false);
+    }
+  };
+
+  const handleConnectIntegration = async (toolkit) => {
+    if (!activeClientId) return;
+    setIntegrationAction(`connect:${toolkit}`);
+    try {
+      const res = await authFetch(`${BACKEND_URL}/workspace/${activeClientId}/integrations/${toolkit}/connect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        addToast({ type: 'error', title: 'Connection Failed', message: data.error || 'Could not start Composio connection.' });
+        return;
+      }
+      if (data.alreadyConnected) {
+        await fetchIntegrations(activeClientId);
+        addToast({ type: 'success', title: 'Already Connected', message: 'AgencyOS reused the existing Composio account.' });
+        return;
+      }
+      window.location.href = data.redirectUrl;
+    } catch (err) {
+      console.error(err);
+      addToast({ type: 'error', title: 'Connection Failed', message: 'Could not reach Composio connection endpoint.' });
+    } finally {
+      setIntegrationAction('');
+    }
+  };
+
+  const handleConnectSharedIntegration = async (toolkit) => {
+    setIntegrationAction(`shared:${toolkit}`);
+    try {
+      const res = await authFetch(`${BACKEND_URL}/integrations/shared/${toolkit}/connect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        addToast({ type: 'error', title: 'Connection Failed', message: data.error || 'Could not start shared Composio connection.' });
+        return;
+      }
+      if (data.alreadyConnected) {
+        await fetchIntegrations(activeClientId);
+        addToast({ type: 'success', title: 'Already Connected', message: 'AgencyOS reused the existing shared Composio account.' });
+        return;
+      }
+      window.location.href = data.redirectUrl;
+    } catch (err) {
+      console.error(err);
+      addToast({ type: 'error', title: 'Connection Failed', message: 'Could not reach shared connection endpoint.' });
+    } finally {
+      setIntegrationAction('');
+    }
+  };
+
+  const handleCheckIntegration = async (toolkit) => {
+    if (!activeClientId) return;
+    setIntegrationAction(`check:${toolkit}`);
+    try {
+      const res = await authFetch(`${BACKEND_URL}/workspace/${activeClientId}/integrations/${toolkit}/check`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        addToast({ type: 'error', title: 'Check Failed', message: data.error || 'Could not refresh connection status.' });
+        return;
+      }
+      await fetchIntegrations(activeClientId);
+      addToast({ type: 'success', title: 'Connection Checked', message: 'Composio status refreshed.' });
+    } catch (err) {
+      console.error(err);
+      addToast({ type: 'error', title: 'Check Failed', message: 'Could not refresh connection status.' });
+    } finally {
+      setIntegrationAction('');
+    }
+  };
+
+  const handleDisconnectIntegration = async (toolkit) => {
+    if (!activeClientId) return;
+    setIntegrationAction(`disconnect:${toolkit}`);
+    try {
+      const res = await authFetch(`${BACKEND_URL}/workspace/${activeClientId}/integrations/${toolkit}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deleteRemote: false })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        addToast({ type: 'error', title: 'Disconnect Failed', message: data.error || 'Could not clear connection mapping.' });
+        return;
+      }
+      await fetchIntegrations(activeClientId);
+      addToast({ type: 'success', title: 'Connection Cleared', message: 'Local Composio mapping removed.' });
+    } catch (err) {
+      console.error(err);
+      addToast({ type: 'error', title: 'Disconnect Failed', message: 'Could not clear connection mapping.' });
+    } finally {
+      setIntegrationAction('');
+    }
+  };
+
+  const handlePromoteSharedIntegration = async (toolkit) => {
+    if (!activeClientId) return;
+    setIntegrationAction(`share:${toolkit}`);
+    try {
+      const res = await authFetch(`${BACKEND_URL}/workspace/${activeClientId}/integrations/${toolkit}/share`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        addToast({ type: 'error', title: 'Share Failed', message: data.error || 'Could not mark connection as shared.' });
+        return;
+      }
+      await fetchIntegrations(activeClientId);
+      addToast({ type: 'success', title: 'Shared Account Added', message: 'This connection can now be mapped to other clients.' });
+    } catch (err) {
+      console.error(err);
+      addToast({ type: 'error', title: 'Share Failed', message: 'Could not mark connection as shared.' });
+    } finally {
+      setIntegrationAction('');
+    }
+  };
+
+  const getSharedConnections = (toolkit) => {
+    return sharedIntegrations.find((item) => item.toolkit === toolkit)?.connections || [];
+  };
+
+  const handleFetchAssets = async (toolkit) => {
+    if (!activeClientId) return;
+    const connectedAccountId = selectedSharedAccounts[toolkit];
+    if (!connectedAccountId) {
+      addToast({ type: 'warning', title: 'Select Account', message: 'Choose a connected account first.' });
+      return;
+    }
+    setIntegrationAction(`assets:${toolkit}`);
+    try {
+      const url = `${BACKEND_URL}/workspace/${activeClientId}/integrations/${toolkit}/assets?connected_account_id=${encodeURIComponent(connectedAccountId)}`;
+      const res = await authFetch(url, { headers: {} });
+      const data = await res.json();
+      if (!res.ok) {
+        addToast({ type: 'error', title: 'Fetch Failed', message: data.error || 'Could not fetch assets.' });
+        return;
+      }
+      setIntegrationAssets((prev) => ({ ...prev, [toolkit]: data.assets || [] }));
+      addToast({ type: 'success', title: 'Assets Fetched', message: `Found ${data.count || 0} connected assets.` });
+    } catch (err) {
+      console.error(err);
+      addToast({ type: 'error', title: 'Fetch Failed', message: 'Could not fetch connected assets.' });
+    } finally {
+      setIntegrationAction('');
+    }
+  };
+
+  const handleSaveAssetMapping = async (toolkit, asset) => {
+    if (!activeClientId) return;
+    const connectedAccountId = selectedSharedAccounts[toolkit];
+    if (!connectedAccountId || !asset) return;
+    setIntegrationAction(`map:${toolkit}`);
+    try {
+      const res = await authFetch(`${BACKEND_URL}/workspace/${activeClientId}/integrations/${toolkit}/mapping`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          connected_account_id: connectedAccountId,
+          label: `${activeClient?.name || 'Client'} ${toolkit} asset`,
+          selected_resource: asset
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        addToast({ type: 'error', title: 'Save Failed', message: data.error || 'Could not save client mapping.' });
+        return;
+      }
+      await fetchIntegrations(activeClientId);
+      addToast({ type: 'success', title: 'Mapping Saved', message: `${asset.name || asset.site_url || asset.id} mapped to ${activeClient?.name}.` });
+    } catch (err) {
+      console.error(err);
+      addToast({ type: 'error', title: 'Save Failed', message: 'Could not save client mapping.' });
+    } finally {
+      setIntegrationAction('');
+    }
+  };
+
   const handleDeleteBookmark = async (id) => {
     setBookmarks(prev => prev.filter(b => b.id !== id));
     try {
@@ -757,7 +989,8 @@ export default function Clients() {
           instagram_promised: newClientIgPromised,
           linkedin_promised: newClientLinkedinPromised,
           twitter_promised: newClientTwitterPromised,
-          youtube_promised: newClientYoutubePromised
+          youtube_promised: newClientYoutubePromised,
+          video_promised: newClientVideoPromised
         })
       });
 
@@ -767,6 +1000,7 @@ export default function Clients() {
 
       addToast({ type: 'success', title: 'Client Created', message: `Workspace for "${finalName}" is ready.` });
       setNewClientName('');
+      setNewClientVideoPromised(0);
       setNewClientOpen(false);
       fetchClients(updatedWs?.id || createdWs?.id);
     } catch (err) {
@@ -791,6 +1025,7 @@ export default function Clients() {
           linkedin_promised: editLinkedinPromised,
           twitter_promised: editTwitterPromised,
           youtube_promised: editYoutubePromised,
+          video_promised: editVideoPromised,
           gmb_webhook_url: gmbWebhookUrl,
           gmb_webhook_headers: gmbWebhookHeaders,
           gmb_webhook_active: gmbWebhookActive,
@@ -1241,6 +1476,22 @@ export default function Clients() {
       console.error(err);
       if (originalPost) updatePlatformPost(platform, postId, originalPost);
       addToast({ type: 'error', title: 'Save Error', message: 'Could not update record.' });
+    }
+  };
+
+  const handleDeletePost = async (platform, postId) => {
+    const setter = { gmb: setGmbPosts, instagram: setIgPosts, linkedin: setLinkedinPosts, twitter: setTwitterPosts, youtube: setYoutubePosts }[platform];
+    const backup = { gmb: gmbPosts, instagram: igPosts, linkedin: linkedinPosts, twitter: twitterPosts, youtube: youtubePosts }[platform];
+    setter(prev => prev.filter(p => p.id !== postId));
+    setEditDrawerOpen(false);
+    setEditingPostId(null);
+    try {
+      const res = await authFetch(`${BACKEND_URL}/${platform}/${postId}`, { method: 'DELETE', headers: {} });
+      if (!res.ok) throw new Error();
+      addToast({ type: 'success', title: 'Post Deleted', message: 'Post removed successfully.' });
+    } catch (err) {
+      setter(backup);
+      addToast({ type: 'error', title: 'Delete Failed', message: 'Could not delete post.' });
     }
   };
 
@@ -2744,6 +2995,19 @@ export default function Clients() {
                       />
                     </div>
                   )}
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-extrabold tracking-widest text-[var(--secondary)] uppercase block">
+                      Promised Videos Total
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      className="input text-sm"
+                      value={newClientVideoPromised}
+                      onChange={(e) => setNewClientVideoPromised(parseInt(e.target.value) || 0)}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -2812,6 +3076,18 @@ export default function Clients() {
                 </button>
                 <button
                   type="button"
+                  onClick={() => setActiveTab('connections')}
+                  className={cn(
+                    "flex-1 py-2 text-[10px] font-bold font-nav rounded-xl transition-all cursor-pointer text-center uppercase tracking-wider",
+                    activeTab === 'connections'
+                      ? "bg-[var(--card)] text-[var(--accent)] shadow-sm"
+                      : "text-[var(--secondary)] hover:text-[var(--text)]"
+                  )}
+                >
+                  Connections
+                </button>
+                <button
+                  type="button"
                   onClick={() => setActiveTab('webhooks')}
                   className={cn(
                     "flex-1 py-2 text-[10px] font-bold font-nav rounded-xl transition-all cursor-pointer text-center uppercase tracking-wider",
@@ -2861,6 +3137,227 @@ export default function Clients() {
                     <div className="w-10 h-6 bg-[var(--surface-strong)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500 relative"></div>
                   </label>
                 </div>
+
+                {activeTab === 'connections' && (
+                  <div className="space-y-4">
+                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-2xl bg-[var(--accent-soft)] flex items-center justify-center text-[var(--accent)] border border-[var(--accent)]/10 shrink-0">
+                          <ShieldCheck size={16} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-black uppercase tracking-wider text-[var(--text)] font-nav">
+                            Read-only Composio Access
+                          </p>
+                          <p className="text-[11px] leading-5 text-[var(--secondary)] mt-1">
+                            Use this tab only to persist client account connections. AI agents should read these accounts through Composio and write summaries or PM HTML back through AgencyOS.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {!integrationsConfigured && (
+                      <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
+                        <p className="text-xs font-bold text-amber-700">Composio is not configured on the backend.</p>
+                        <p className="text-[11px] text-[var(--secondary)] mt-1">
+                          Set COMPOSIO_API_KEY and toolkit auth config IDs in the Zata server environment.
+                        </p>
+                      </div>
+                    )}
+
+                    {integrationsLoading ? (
+                      <div className="space-y-3">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="h-24 rounded-2xl shimmer" />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {integrations.map((item) => {
+                          const connected = !!item.connected_account_id && String(item.status).toUpperCase() === 'ACTIVE';
+                          const busy = integrationAction.endsWith(`:${item.toolkit}`);
+                          const sharedConnections = getSharedConnections(item.toolkit);
+                          const assets = integrationAssets[item.toolkit] || [];
+                          const supportsMapping = Boolean(item.supportsAssetFetch);
+                          const selectedResourceLabel =
+                            item.selected_resource?.name ||
+                            item.selected_resource?.page_name ||
+                            item.selected_resource?.site_url ||
+                            item.selected_resource?.username ||
+                            item.selected_resource?.id;
+                          return (
+                            <div key={item.toolkit} className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <p className="text-sm font-bold text-[var(--text)]">{item.label || item.toolkit}</p>
+                                    <span className={cn(
+                                      "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border",
+                                      connected
+                                        ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                                        : item.status === 'initiated'
+                                          ? "bg-amber-50 text-amber-700 border-amber-100"
+                                          : "bg-stone-100 text-stone-600 border-stone-200"
+                                    )}>
+                                      {connected ? 'Connected' : item.status?.replaceAll('_', ' ') || 'Not connected'}
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-[var(--secondary)] mt-1 leading-5">
+                                    {item.readOnlyUse}
+                                  </p>
+                                  {item.connected_account_id && (
+                                    <p className="text-[10px] text-[var(--muted)] mt-2 font-mono truncate">
+                                      {item.connected_account_id}
+                                    </p>
+                                  )}
+                                  {item.last_sync_at && (
+                                    <p className="text-[10px] text-[var(--muted)] mt-1">
+                                      Last summary: {new Date(item.last_sync_at).toLocaleString()}
+                                    </p>
+                                  )}
+                                  {item.last_error && (
+                                    <p className="text-[10px] text-red-500 mt-1">
+                                      {item.last_error}
+                                    </p>
+                                  )}
+                                  {selectedResourceLabel && (
+                                    <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">
+                                      <p className="text-[9px] font-black uppercase tracking-wider text-[var(--muted)]">Mapped Client Asset</p>
+                                      <p className="text-xs font-bold text-[var(--text)] mt-1 truncate">{selectedResourceLabel}</p>
+                                      {(item.selected_resource?.link || item.selected_resource?.permission_level || item.selected_resource?.role) && (
+                                        <p className="text-[10px] text-[var(--secondary)] mt-1 truncate">
+                                          {item.selected_resource.link || item.selected_resource.permission_level || item.selected_resource.role}
+                                        </p>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  {connected && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleCheckIntegration(item.toolkit)}
+                                      disabled={busy}
+                                      className="theme-icon-button !w-9 !h-9 !rounded-xl cursor-pointer"
+                                      title="Refresh connection status"
+                                    >
+                                      <RefreshCw size={14} className={busy ? "animate-spin" : ""} />
+                                    </button>
+                                  )}
+                                  {connected && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDisconnectIntegration(item.toolkit)}
+                                      disabled={busy}
+                                      className="theme-icon-button !w-9 !h-9 !rounded-xl cursor-pointer text-red-500"
+                                      title="Clear local mapping"
+                                    >
+                                      <Unplug size={14} />
+                                    </button>
+                                  )}
+                                  {connected && supportsMapping && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handlePromoteSharedIntegration(item.toolkit)}
+                                      disabled={busy}
+                                      className="theme-icon-button !w-9 !h-9 !rounded-xl cursor-pointer"
+                                      title="Use this account as a shared source"
+                                    >
+                                      <Link2 size={14} />
+                                    </button>
+                                  )}
+                                  {!connected && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleConnectIntegration(item.toolkit)}
+                                      disabled={busy || !item.configured || !integrationsConfigured}
+                                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--accent)] px-3 h-9 text-[10px] font-black uppercase tracking-wider text-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                    >
+                                      <Link2 size={13} />
+                                      {busy ? 'Opening' : 'Connect'}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              {supportsMapping && (
+                                <div className="mt-4 space-y-3 border-t border-[var(--border)] pt-4">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <label className="text-[10px] font-extrabold tracking-widest text-[var(--secondary)] uppercase">
+                                      Shared Account
+                                    </label>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleConnectSharedIntegration(item.toolkit)}
+                                      disabled={busy || !item.configured || !integrationsConfigured}
+                                      className="inline-flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1.5 text-[9px] font-black uppercase tracking-wider text-[var(--secondary)] hover:text-[var(--text)] disabled:opacity-50 cursor-pointer"
+                                    >
+                                      <Link2 size={11} />
+                                      Add Shared
+                                    </button>
+                                  </div>
+
+                                  {sharedConnections.length > 0 ? (
+                                    <div className="flex gap-2">
+                                      <select
+                                        className="input text-xs !min-h-10 flex-1"
+                                        value={selectedSharedAccounts[item.toolkit] || ''}
+                                        onChange={(e) => setSelectedSharedAccounts((prev) => ({ ...prev, [item.toolkit]: e.target.value }))}
+                                      >
+                                        <option value="">Select connected account</option>
+                                        {sharedConnections.map((conn) => (
+                                          <option key={conn.connected_account_id || conn.id} value={conn.connected_account_id || ''}>
+                                            {conn.label || conn.connected_account_id}
+                                          </option>
+                                        ))}
+                                      </select>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleFetchAssets(item.toolkit)}
+                                        disabled={busy || !selectedSharedAccounts[item.toolkit]}
+                                        className="inline-flex items-center justify-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 text-[10px] font-black uppercase tracking-wider text-[var(--secondary)] hover:text-[var(--text)] disabled:opacity-50 cursor-pointer"
+                                      >
+                                        <RefreshCw size={12} className={integrationAction === `assets:${item.toolkit}` ? "animate-spin" : ""} />
+                                        Fetch
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <p className="text-[10px] text-[var(--muted)]">
+                                      No shared {item.label} account connected yet. Add one once, then map assets for each client.
+                                    </p>
+                                  )}
+
+                                  {assets.length > 0 && (
+                                    <div className="max-h-56 overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--surface)] p-2 space-y-1">
+                                      {assets.map((asset) => {
+                                        const assetKey = asset.id || asset.site_url || asset.username;
+                                        const assetLabel = asset.name || asset.site_url || asset.username || asset.id;
+                                        return (
+                                          <button
+                                            key={assetKey}
+                                            type="button"
+                                            onClick={() => handleSaveAssetMapping(item.toolkit, asset)}
+                                            disabled={integrationAction === `map:${item.toolkit}`}
+                                            className="w-full text-left rounded-lg px-3 py-2 hover:bg-[var(--card)] border border-transparent hover:border-[var(--border)] transition-colors cursor-pointer"
+                                          >
+                                            <p className="text-xs font-bold text-[var(--text)] truncate">{assetLabel}</p>
+                                            <p className="text-[10px] text-[var(--muted)] truncate">
+                                              {asset.category || asset.permission_level || asset.role || asset.username || asset.link || asset.id}
+                                            </p>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {activeTab === 'webhooks' && (
                   <div className="space-y-6">
@@ -3326,6 +3823,19 @@ export default function Clients() {
                           />
                         </div>
                       )}
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-extrabold tracking-widest text-[var(--secondary)] uppercase block">
+                          Promised Videos Total
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          className="input text-sm"
+                          value={editVideoPromised}
+                          onChange={(e) => setEditVideoPromised(parseInt(e.target.value) || 0)}
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -3595,6 +4105,18 @@ export default function Clients() {
               </div>
 
               <div className="drawer-footer">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm('Delete this post? This cannot be undone.')) {
+                      handleDeletePost(editPlatform, editingPostId);
+                    }
+                  }}
+                  className="h-12 px-4 rounded-2xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-xs font-bold text-red-500 transition-colors cursor-pointer flex items-center gap-1.5"
+                >
+                  <Trash2 size={13} />
+                  Delete
+                </button>
                 <button
                   type="button"
                   onClick={() => setEditDrawerOpen(false)}
