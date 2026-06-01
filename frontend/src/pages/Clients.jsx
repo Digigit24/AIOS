@@ -811,13 +811,14 @@ export default function Clients() {
     }
   };
 
-  const handleCheckIntegration = async (toolkit) => {
+  const handleCheckIntegration = async (toolkit, connectedAccountId = null) => {
     if (!activeClientId) return;
     setIntegrationAction(`check:${toolkit}`);
     try {
       const res = await authFetch(`${BACKEND_URL}/workspace/${activeClientId}/integrations/${toolkit}/check`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ connected_account_id: connectedAccountId })
       });
       const data = await res.json();
       if (!res.ok) {
@@ -834,14 +835,14 @@ export default function Clients() {
     }
   };
 
-  const handleDisconnectIntegration = async (toolkit) => {
+  const handleDisconnectIntegration = async (toolkit, connectedAccountId = null) => {
     if (!activeClientId) return;
     setIntegrationAction(`disconnect:${toolkit}`);
     try {
       const res = await authFetch(`${BACKEND_URL}/workspace/${activeClientId}/integrations/${toolkit}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deleteRemote: false })
+        body: JSON.stringify({ deleteRemote: false, connected_account_id: connectedAccountId })
       });
       const data = await res.json();
       if (!res.ok) {
@@ -858,13 +859,14 @@ export default function Clients() {
     }
   };
 
-  const handlePromoteSharedIntegration = async (toolkit) => {
+  const handlePromoteSharedIntegration = async (toolkit, connectedAccountId = null) => {
     if (!activeClientId) return;
     setIntegrationAction(`share:${toolkit}`);
     try {
       const res = await authFetch(`${BACKEND_URL}/workspace/${activeClientId}/integrations/${toolkit}/share`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ connected_account_id: connectedAccountId })
       });
       const data = await res.json();
       if (!res.ok) {
@@ -3174,7 +3176,9 @@ export default function Clients() {
                     ) : (
                       <div className="space-y-3">
                         {integrations.map((item) => {
-                          const connected = !!item.connected_account_id && String(item.status).toUpperCase() === 'ACTIVE';
+                          const workspaceConnections = item.connections || [];
+                          const activeConnection = workspaceConnections.find((conn) => String(conn.status).toUpperCase() === 'ACTIVE');
+                          const connected = Boolean(activeConnection);
                           const busy = integrationAction.endsWith(`:${item.toolkit}`);
                           const sharedConnections = getSharedConnections(item.toolkit);
                           const assets = integrationAssets[item.toolkit] || [];
@@ -3205,10 +3209,61 @@ export default function Clients() {
                                   <p className="text-[11px] text-[var(--secondary)] mt-1 leading-5">
                                     {item.readOnlyUse}
                                   </p>
-                                  {item.connected_account_id && (
-                                    <p className="text-[10px] text-[var(--muted)] mt-2 font-mono truncate">
-                                      {item.connected_account_id}
-                                    </p>
+                                  {workspaceConnections.length > 0 && (
+                                    <div className="mt-3 space-y-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3">
+                                      <p className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--muted)]">
+                                        Connected accounts
+                                      </p>
+                                      {workspaceConnections.map((conn) => (
+                                        <div key={conn.connected_account_id || conn.id} className="rounded-xl border border-[var(--border)] bg-white/5 p-3">
+                                          <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0">
+                                              <p className="text-[10px] font-bold text-[var(--text)] truncate">
+                                                {conn.label || conn.connected_account_id || conn.id}
+                                              </p>
+                                              <p className="text-[9px] text-[var(--muted)] mt-1 break-all">
+                                                {conn.connected_account_id || conn.id}
+                                              </p>
+                                              <p className="text-[9px] text-[var(--secondary)] mt-1">
+                                                Status: {String(conn.status || 'unknown').replaceAll('_', ' ')}
+                                                {conn.last_checked_at ? ` · ${new Date(conn.last_checked_at).toLocaleString()}` : ''}
+                                              </p>
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                              <button
+                                                type="button"
+                                                onClick={() => handleCheckIntegration(item.toolkit, conn.connected_account_id)}
+                                                disabled={busy}
+                                                className="theme-icon-button !w-9 !h-9 !rounded-xl cursor-pointer"
+                                                title="Refresh this account"
+                                              >
+                                                <RefreshCw size={12} className={busy ? 'animate-spin' : ''} />
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => handleDisconnectIntegration(item.toolkit, conn.connected_account_id)}
+                                                disabled={busy}
+                                                className="theme-icon-button !w-9 !h-9 !rounded-xl cursor-pointer text-red-500"
+                                                title="Remove this account"
+                                              >
+                                                <Unplug size={14} />
+                                              </button>
+                                              {supportsMapping && (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handlePromoteSharedIntegration(item.toolkit, conn.connected_account_id)}
+                                                  disabled={busy}
+                                                  className="theme-icon-button !w-9 !h-9 !rounded-xl cursor-pointer"
+                                                  title="Share this account"
+                                                >
+                                                  <Link2 size={14} />
+                                                </button>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
                                   )}
                                   {item.last_sync_at && (
                                     <p className="text-[10px] text-[var(--muted)] mt-1">
@@ -3236,21 +3291,21 @@ export default function Clients() {
                                   {connected && (
                                     <button
                                       type="button"
-                                      onClick={() => handleCheckIntegration(item.toolkit)}
+                                      onClick={() => handleCheckIntegration(item.toolkit, activeConnection?.connected_account_id)}
                                       disabled={busy}
                                       className="theme-icon-button !w-9 !h-9 !rounded-xl cursor-pointer"
-                                      title="Refresh connection status"
+                                      title="Refresh active connection status"
                                     >
-                                      <RefreshCw size={14} className={busy ? "animate-spin" : ""} />
+                                      <RefreshCw size={14} className={busy ? 'animate-spin' : ''} />
                                     </button>
                                   )}
                                   {connected && (
                                     <button
                                       type="button"
-                                      onClick={() => handleDisconnectIntegration(item.toolkit)}
+                                      onClick={() => handleDisconnectIntegration(item.toolkit, activeConnection?.connected_account_id)}
                                       disabled={busy}
                                       className="theme-icon-button !w-9 !h-9 !rounded-xl cursor-pointer text-red-500"
-                                      title="Clear local mapping"
+                                      title="Remove active connection"
                                     >
                                       <Unplug size={14} />
                                     </button>
@@ -3258,25 +3313,23 @@ export default function Clients() {
                                   {connected && supportsMapping && (
                                     <button
                                       type="button"
-                                      onClick={() => handlePromoteSharedIntegration(item.toolkit)}
+                                      onClick={() => handlePromoteSharedIntegration(item.toolkit, activeConnection?.connected_account_id)}
                                       disabled={busy}
                                       className="theme-icon-button !w-9 !h-9 !rounded-xl cursor-pointer"
-                                      title="Use this account as a shared source"
+                                      title="Share active account"
                                     >
                                       <Link2 size={14} />
                                     </button>
                                   )}
-                                  {!connected && (
-                                    <button
-                                      type="button"
-                                      onClick={() => handleConnectIntegration(item.toolkit)}
-                                      disabled={busy || !item.configured || !integrationsConfigured}
-                                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--accent)] px-3 h-9 text-[10px] font-black uppercase tracking-wider text-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                                    >
-                                      <Link2 size={13} />
-                                      {busy ? 'Opening' : 'Connect'}
-                                    </button>
-                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleConnectIntegration(item.toolkit)}
+                                    disabled={busy || !item.configured || !integrationsConfigured}
+                                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--accent)] px-3 h-9 text-[10px] font-black uppercase tracking-wider text-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                  >
+                                    <Link2 size={13} />
+                                    {busy ? 'Opening' : workspaceConnections.length ? 'Add account' : 'Connect'}
+                                  </button>
                                 </div>
                               </div>
 
