@@ -290,6 +290,7 @@ export default function Clients() {
   const [editTwitterPromised, setEditTwitterPromised] = useState(15);
   const [editYoutubePromised, setEditYoutubePromised] = useState(5);
   const [editVideoPromised, setEditVideoPromised] = useState(0);
+  const [editShootsPromised, setEditShootsPromised] = useState(0);
   const [editClientNotes, setEditClientNotes] = useState('');
   const [editClientActive, setEditClientActive] = useState(true);
   const [integrations, setIntegrations] = useState([]);
@@ -552,6 +553,7 @@ export default function Clients() {
         twitter_promised: ws.twitter_promised,
         youtube_promised: ws.youtube_promised,
         video_promised: ws.video_promised,
+        shoots_promised: ws.shoots_promised || 0,
         gmb_webhook_url: ws.gmb_webhook_url,
         gmb_webhook_headers: ws.gmb_webhook_headers,
         gmb_webhook_active: ws.gmb_webhook_active,
@@ -607,6 +609,7 @@ export default function Clients() {
         setEditTwitterPromised(match.twitter_promised !== undefined ? match.twitter_promised : 15);
         setEditYoutubePromised(match.youtube_promised !== undefined ? match.youtube_promised : 5);
         setEditVideoPromised(match.video_promised !== undefined ? match.video_promised : 0);
+        setEditShootsPromised(match.shoots_promised !== undefined ? match.shoots_promised : 0);
 
         // Hydrate active platforms
         const platformsList = match.active_platforms ? match.active_platforms.split(',') : ['gmb', 'instagram'];
@@ -1028,6 +1031,7 @@ export default function Clients() {
           twitter_promised: editTwitterPromised,
           youtube_promised: editYoutubePromised,
           video_promised: editVideoPromised,
+          shoots_promised: editShootsPromised,
           gmb_webhook_url: gmbWebhookUrl,
           gmb_webhook_headers: gmbWebhookHeaders,
           gmb_webhook_active: gmbWebhookActive,
@@ -3036,14 +3040,14 @@ export default function Clients() {
       {/* CLIENT SPECIFIC SETTINGS SIDEDRAWER */}
       {isSettingsOpen && activeClient && (
         <>
-          <button 
+          <button
             onClick={() => setSettingsOpen(false)}
             className="drawer-overlay cursor-pointer"
             aria-label="Close settings drawer"
             style={{ animation: 'drawer-overlay-fade 0.3s forwards' }}
           />
-          <div 
-            className="drawer-panel"
+          <div
+            className="drawer-panel wide"
             style={{ animation: 'drawer-panel-slide 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards' }}
           >
             <div className="w-12 h-1 bg-[var(--surface-strong)] rounded-full mx-auto mt-3 mb-1 shrink-0 md:hidden" />
@@ -3061,57 +3065,43 @@ export default function Clients() {
               </button>
             </div>
 
-            {/* Horizontal Segmented Pill Tabs Selector */}
+            {/* Tabs — pill buttons on desktop, dropdown on mobile (< 640px) */}
             <div className="px-7 pt-4 bg-[var(--card)] shrink-0 select-none">
-              <div className="flex p-1 bg-[var(--surface)] rounded-2xl border border-[var(--border)]">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('deliverables')}
-                  className={cn(
-                    "flex-1 py-2 text-[10px] font-bold font-nav rounded-xl transition-all cursor-pointer text-center uppercase tracking-wider",
-                    activeTab === 'deliverables'
-                      ? "bg-[var(--card)] text-[var(--accent)] shadow-sm"
-                      : "text-[var(--secondary)] hover:text-[var(--text)]"
-                  )}
+              {/* Mobile dropdown */}
+              <div className="sm:hidden">
+                <select
+                  value={activeTab}
+                  onChange={(e) => setActiveTab(e.target.value)}
+                  className="w-full input text-xs font-bold uppercase tracking-wider py-2 cursor-pointer"
                 >
-                  Deliverables
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('connections')}
-                  className={cn(
-                    "flex-1 py-2 text-[10px] font-bold font-nav rounded-xl transition-all cursor-pointer text-center uppercase tracking-wider",
-                    activeTab === 'connections'
-                      ? "bg-[var(--card)] text-[var(--accent)] shadow-sm"
-                      : "text-[var(--secondary)] hover:text-[var(--text)]"
-                  )}
-                >
-                  Connections
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('webhooks')}
-                  className={cn(
-                    "flex-1 py-2 text-[10px] font-bold font-nav rounded-xl transition-all cursor-pointer text-center uppercase tracking-wider",
-                    activeTab === 'webhooks'
-                      ? "bg-[var(--card)] text-[var(--accent)] shadow-sm"
-                      : "text-[var(--secondary)] hover:text-[var(--text)]"
-                  )}
-                >
-                  Webhooks
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('notes')}
-                  className={cn(
-                    "flex-1 py-2 text-[10px] font-bold font-nav rounded-xl transition-all cursor-pointer text-center uppercase tracking-wider",
-                    activeTab === 'notes'
-                      ? "bg-[var(--card)] text-[var(--accent)] shadow-sm"
-                      : "text-[var(--secondary)] hover:text-[var(--text)]"
-                  )}
-                >
-                  Notes
-                </button>
+                  <option value="deliverables">Deliverables</option>
+                  <option value="connections">Connections</option>
+                  <option value="webhooks">Webhooks</option>
+                  <option value="notes">Notes</option>
+                </select>
+              </div>
+              {/* Desktop pill tabs */}
+              <div className="hidden sm:flex p-1 bg-[var(--surface)] rounded-2xl border border-[var(--border)]">
+                {[
+                  { key: 'deliverables', label: 'Deliverables' },
+                  { key: 'connections',  label: 'Connections' },
+                  { key: 'webhooks',     label: 'Webhooks' },
+                  { key: 'notes',        label: 'Notes' },
+                ].map(({ key, label }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setActiveTab(key)}
+                    className={cn(
+                      "flex-1 py-2 text-[10px] font-bold font-nav rounded-xl transition-all cursor-pointer text-center uppercase tracking-wider",
+                      activeTab === key
+                        ? "bg-[var(--card)] text-[var(--accent)] shadow-sm"
+                        : "text-[var(--secondary)] hover:text-[var(--text)]"
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -3887,6 +3877,19 @@ export default function Clients() {
                           className="input text-sm"
                           value={editVideoPromised}
                           onChange={(e) => setEditVideoPromised(parseInt(e.target.value) || 0)}
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-extrabold tracking-widest text-[var(--secondary)] uppercase block">
+                          Promised Shoot Sessions
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          className="input text-sm"
+                          value={editShootsPromised}
+                          onChange={(e) => setEditShootsPromised(parseInt(e.target.value) || 0)}
                         />
                       </div>
                     </div>

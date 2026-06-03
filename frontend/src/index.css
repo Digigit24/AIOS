@@ -213,14 +213,14 @@ h1, h2, h3, h4, h5, h6 {
   .admin-main {
     margin-left: 0 !important;
     padding: 16px;
-    padding-top: 88px; /* account for topbar */
+    padding-top: 16px;
   }
 }
 
 @media (max-width: 640px) {
   .admin-main {
     padding: 12px;
-    padding-top: 88px;
+    padding-top: 16px;
   }
 }
 
@@ -340,6 +340,11 @@ h1, h2, h3, h4, h5, h6 {
   flex-direction: column;
   overflow: hidden;
   transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1), opacity 380ms ease;
+}
+
+/* Wide variant — used for client settings drawer (desktop only) */
+.drawer-panel.wide {
+  width: min(680px, calc(100vw - 32px));
 }
 
 /* Custom overlay backdrop */
